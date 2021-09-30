@@ -98,6 +98,7 @@ if env["platform"] == "osx":
         env.Append(CCFLAGS=["-g", "-O3"])
 
 elif env["platform"] in ("x11", "linux"):
+    env['target_path'] += 'linux/'
     cpp_library += ".linux"
     env.Append(CCFLAGS=["-fPIC"])
     env.Append(CXXFLAGS=["-std=c++17"])
@@ -107,6 +108,7 @@ elif env["platform"] in ("x11", "linux"):
         env.Append(CCFLAGS=["-g", "-O3"])
 
 elif env["platform"] == "windows":
+    env['target_path'] += 'win64/'
     cpp_library += ".windows"
     # This makes sure to keep the session environment variables on windows,
     # that way you can run scons in a vs 2017 prompt and it will find all the required tools
@@ -128,15 +130,19 @@ elif env["platform"] == "windows":
 
 # Link against HoloPlayCore SDK
 holoplay_core_lib = ""
+holoplay_core_library_path = ""
 holoplay_core_headers_path = "HoloPlayCore/include"
 if env["platform"] == "osx":
-    holoplay_core_lib = 'HoloPlayCore/dylib/macos/HoloPlayCore.dylib'
+    holoplay_core_library_path = 'HoloPlayCore/dylib/macos/'
+    holoplay_core_lib = 'HoloPlayCore.dylib'
 
 elif env["platform"] in ("x11", "linux"):
-    holoplay_core_lib = 'HoloPlayCore/dylib/linux/libHoloPlayCore.so'
+    holoplay_core_library_path = 'HoloPlayCore/dylib/linux/'
+    holoplay_core_lib = 'libHoloPlayCore.so'
 
 elif env["platform"] == "windows":
-    holoplay_core_lib = 'HoloPlayCore/dylib/Win64/HoloPlayCore.lib'
+    holoplay_core_library_path = 'HoloPlayCore/dylib/Win64/'
+    holoplay_core_lib = 'HoloPlayCore.lib'
 
 # determine our architecture suffix
 arch_suffix = str(bits)
@@ -146,15 +152,13 @@ cpp_library += "." + env["target"] + "." + arch_suffix
 
 # make sure our binding library is properly includes
 env.Append(CPPPATH=[".", godot_headers_path, cpp_bindings_path + "include/", cpp_bindings_path + "gen/include/", holoplay_core_headers_path])
-env.Append(LIBPATH=[cpp_bindings_path + "bin/"])
+env.Append(LIBPATH=[cpp_bindings_path + "bin/", holoplay_core_library_path])
 env.Append(LIBS=[cpp_library, holoplay_core_lib])
 
 # tweak this if you want to use different folders, or more folders, to store your source code in.
 env.Append(CPPPATH=["src/"])
 sources = Glob("src/*.cpp")
 
-target_name = "{}.{}.{}.{}".format(env["target_name"], env["platform"], env["target"], arch_suffix)
-print(target_name)
-library = env.SharedLibrary(target=env["target_path"] + target_name, source=sources)
+library = env.SharedLibrary(target=env["target_path"] + env["target_name"], source=sources)
 
 Default(library)

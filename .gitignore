@@ -1,3 +1,6 @@
+# Exclude HoloPlayCore libraries
+!HoloPlayCore
+
 # Godot auto generated files
 *.gen.*
 .import/
